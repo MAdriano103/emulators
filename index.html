@@ -36,6 +36,15 @@
             z-index: -1;
             display: block !important; /* Important to ensure it's not hidden by normal CSS */
         }
+
+        /* Marquee animation for mobile warning */
+        @keyframes marquee {
+            0%   { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .animate-marquee {
+            animation: marquee 25s linear infinite; /* Adjusted speed for longer text */
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
@@ -94,6 +103,12 @@
             <!-- Options will be dynamically populated -->
         </select>
     </div>
+
+    <!-- Mobile Warning Message -->
+    <div id="mobile-warning" class="fixed bottom-0 right-0 z-30 bg-yellow-300 text-gray-900 p-2 pl-4 pr-4 rounded-tl-lg shadow-lg hidden md:hidden overflow-hidden whitespace-nowrap text-sm">
+        <span class="font-bold text-red-700">📢 Atenção!</span> Para a melhor experiência, acesse este site pelo modo desktop. Se você estiver no celular, ative a versão para computador no seu navegador. Isso garante que todos os recursos funcionem corretamente.
+    </div>
+
 
     <!-- Main Content Area -->
     <main id="main-content" class="flex-grow py-8"></main>
@@ -172,7 +187,7 @@
         // Data for games and emulators
         const games = {
             'PlayStation 2': [
-                { id: 1, title: 'God of War II', platform: 'PlayStation 2', imageUrl: 'https://i.pinimg.com/736x/7b/4f/d6/7b4fd6df1d423ee35744e90a1c5cdf3d.jpg', description: 'Uma épica aventura de Kratos em busca de vingança contra os deuses do Olimpo.', downloadLink: 'https://dl.coolrom.com.au/dl/41805/d2mdZbKT3dlZw0ulKcm1KA/1750790561/', youtubeTrailerUrl: 'https://www.youtube.com/embed/oe0OmX9hINA?si=Z73Ek0Tvsw1tjhxC' }, // Example YouTube ID
+                { id: 1, title: 'God of War II', platform: 'PlayStation 2', imageUrl: 'https://i.pinimg.com/736x/7b/4f/d6/7b4fd6df1d423ee35744e90a1c5cdf3d.jpg', description: 'Uma épica aventura de Kratos em busca de vingança contra os deuses do Olimpo.', downloadLink: 'https://dl.coolrom.com.au/dl/41805/d2mdZbKT3dlZw0ulKcm1KA/1750790561/', youtubeTrailerUrl: 'https://www.youtube.com/embed/oe0OmX9hINA?si=Z73Ek0Tvsw1tjhxC' },
                 { id: 2, title: 'Grand Theft Auto: San Andreas', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/pt/d/d3/Grand_Theft_Auto_San_Andreas_capa.png', description: 'Explore o vasto estado de San Andreas como CJ, em uma jornada de crime e redenção nos anos 90.', downloadLink: 'https://dl.coolrom.com.au/dl/41807/itwi0gPvz5T9lxL84PlEEg/1750790234/', youtubeTrailerUrl: 'https://www.youtube.com/embed/K5ztZ5GvnJ4?si=b784OxdBlmxSlW1H' },
                 { id: 3, title: 'Resident Evil 4', platform: 'PlayStation 2', imageUrl: 'https://i.pinimg.com/736x/81/91/8f/81918f94bb9006d586ed794e32c0e151.jpg', description: 'Leon S. Kennedy deve resgatar a filha do presidente em uma vila rural infestada por um novo tipo de horror.', downloadLink: 'https://dl.coolrom.com.au/dl/41800/CtzWaH0assvmAiUfn8o-uQ/1750789541/', youtubeTrailerUrl: 'https://www.youtube.com/embed/1KTghW30ZuY?si=-Meo7C9anKjbYg6F' },
                 { id: 4, title: 'Metal Gear Solid 3: Snake Eater', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/pt/thumb/4/44/Metal_Gear_Solid_3_capa.png/330px-Metal_Gear_Solid_3_capa.png', description: 'Uma obra-prima de espionagem e sobrevivência na Guerra Fria, com Naked Snake em uma missão secreta.', downloadLink: 'https://dl.coolrom.com.au/dl/41809/gdbHoE_SVX8gi8CakMQZGQ/1750791145/', youtubeTrailerUrl: 'https://www.youtube.com/embed/hXUono66wxI?si=qjlChbuFrJDJXBkm' },
@@ -258,14 +273,14 @@
         const mainContent = document.getElementById('main-content');
         const navHomeButton = document.getElementById('nav-home');
         const navEmulatorsButton = document.getElementById('nav-emulators');
-        const navContactButton = document.getElementById('nav-contact'); // New contact button
-        const navHelpProjectButton = document.getElementById('nav-help-project'); // New help project button
+        const navContactButton = document.getElementById('nav-contact');
+        const navHelpProjectButton = document.getElementById('nav-help-project');
         const searchInput = document.getElementById('search-input');
 
         const mobileNavGamesButton = document.getElementById('mobile-nav-games');
         const mobileNavEmulatorsButton = document.getElementById('mobile-nav-emulators');
-        const mobileNavContactButton = document.getElementById('mobile-nav-contact'); // New mobile contact button
-        const mobileNavHelpProjectButton = document.getElementById('mobile-nav-help-project'); // New mobile help project button
+        const mobileNavContactButton = document.getElementById('mobile-nav-contact');
+        const mobileNavHelpProjectButton = document.getElementById('mobile-nav-help-project');
         const mobilePlatformDropdown = document.getElementById('mobile-platform-dropdown');
         const mobilePlatformSelect = document.getElementById('mobile-platform-select');
 
@@ -288,6 +303,7 @@
         const adblockModal = document.getElementById('adblock-modal');
         const adblockDismissButton = document.getElementById('adblock-dismiss');
         const adPlaceholder = document.getElementById('ad-placeholder');
+        const mobileWarning = document.getElementById('mobile-warning'); // Get mobile warning element
 
 
         // --- Helper Functions ---
@@ -660,6 +676,8 @@
                 mobileNavHelpProjectButton.classList.add('bg-red-600', 'text-white', 'shadow-md');
                 renderHelpProjectPage();
             }
+            // Update mobile warning visibility on page change
+            checkMobileWarningVisibility();
         }
 
         // --- AdBlock Detector Logic ---
@@ -689,6 +707,19 @@
                 }
             }, 100); // Short delay
         }
+
+        // --- Mobile Warning Logic ---
+        function checkMobileWarningVisibility() {
+            // Show only on screens smaller than 'md' breakpoint (768px in Tailwind by default)
+            if (window.innerWidth < 768) {
+                mobileWarning.classList.remove('hidden');
+                mobileWarning.classList.add('animate-marquee');
+            } else {
+                mobileWarning.classList.add('hidden');
+                mobileWarning.classList.remove('animate-marquee');
+            }
+        }
+
 
         // --- Event Listeners ---
 
@@ -723,6 +754,9 @@
 
             // Run AdBlock check after initial render
             setTimeout(checkAdBlock, 500); // Give AdBlockers a moment to kick in
+
+            // Initial check for mobile warning visibility
+            checkMobileWarningVisibility();
         });
 
         // Navigation buttons
@@ -822,7 +856,10 @@
         });
 
         // Listen for resize events to re-check AdBlock (in case it's activated/deactivated)
-        window.addEventListener('resize', checkAdBlock);
+        window.addEventListener('resize', () => {
+            checkAdBlock(); // Re-check adblock on resize
+            checkMobileWarningVisibility(); // Re-check mobile warning visibility on resize
+        });
 
     </script>
 </body>
