@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameFlix - Seu Catálogo de Jogos</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Hide scrollbar for aesthetic purposes */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        /* Custom styling for AdBlock detector placeholder */
+        #ad-placeholder {
+            width: 1px;
+            height: 1px;
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            visibility: hidden;
+            pointer-events: none;
+            /* Common classes blocked by AdBlockers */
+            background-image: url("https://via.placeholder.com/1x1?text=ad");
+            z-index: -1;
+            display: block !important; /* Important to ensure it's not hidden by normal CSS */
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gray-900 p-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between shadow-md rounded-b-lg">
+        <div class="flex items-center w-full sm:w-auto mb-4 sm:mb-0 justify-center sm:justify-start">
+            <h1 class="text-red-600 text-3xl sm:text-4xl font-extrabold mr-4 tracking-tight">
+                GameFlix
+            </h1>
+            <!-- Navigation for desktop -->
+            <nav class="hidden sm:flex space-x-4">
+                <button id="nav-home" class="py-2 px-3 rounded-full text-sm font-medium transition-colors duration-200 bg-red-600 text-white shadow-md">
+                    Catálogo de Jogos
+                </button>
+                <button id="nav-emulators" class="py-2 px-3 rounded-full text-sm font-medium transition-colors duration-200 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    Emuladores
+                </button>
+                <button id="nav-contact" class="py-2 px-3 rounded-full text-sm font-medium transition-colors duration-200 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    Contato
+                </button>
+                <button id="nav-help-project" class="py-2 px-3 rounded-full text-sm font-medium transition-colors duration-200 text-gray-300 hover:bg-gray-700 hover:text-white">
+                    Ajudar Projeto
+                </button>
+            </nav>
+        </div>
+        <!-- Search Bar -->
+        <div class="relative w-full sm:w-64">
+            <input type="text" id="search-input" placeholder="Pesquisar jogos..." class="w-full pl-10 pr-4 py-2 rounded-full bg-gray-700 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <!-- Search Icon (SVG) -->
+                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation (Dropdown for home page, buttons for emulators) -->
+    <div class="sm:hidden p-4 bg-gray-900 shadow-md rounded-lg mx-4 mt-4 flex justify-around">
+        <button id="mobile-nav-games" class="py-2 px-3 rounded-full text-sm font-medium transition-colors duration-200 bg-red-600 text-white shadow-md">
+            Jogos
+        </button>
+        <button id="mobile-nav-emulators" class="py-2 px-3 rounded-full text-sm font-medium transition-colors duration-200 text-gray-300 hover:bg-gray-700 hover:text-white">
+            Emuladores
+        </button>
+        <button id="mobile-nav-contact" class="py-2 px-3 rounded-full text-sm font-medium transition-colors duration-200 text-gray-300 hover:bg-gray-700 hover:text-white">
+            Contato
+        </button>
+        <button id="mobile-nav-help-project" class="py-2 px-3 rounded-full text-sm font-medium transition-colors duration-200 text-gray-300 hover:bg-gray-700 hover:text-white">
+            Ajudar
+        </button>
+    </div>
+    <div id="mobile-platform-dropdown" class="sm:hidden p-4 bg-gray-900 shadow-md rounded-lg mx-4 mt-2">
+        <select id="mobile-platform-select" class="w-full p-2 rounded-md bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
+            <!-- Options will be dynamically populated -->
+        </select>
+    </div>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="flex-grow py-8"></main>
+
+    <!-- Game Description Modal -->
+    <div id="game-description-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-900 rounded-lg p-6 w-full max-w-md lg:max-w-xl xl:max-w-2xl shadow-xl border border-gray-700 relative max-h-[90vh] overflow-y-auto">
+            <button id="close-description-modal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-100 text-2xl font-bold">
+                &times;
+            </button>
+            <h2 id="modal-game-title" class="text-gray-100 text-2xl font-bold mb-4 text-center"></h2>
+            <img id="modal-game-image" src="" alt="" class="w-32 h-auto mx-auto rounded-lg mb-4">
+            <p id="modal-game-platform" class="text-gray-300 text-center mb-4"></p>
+
+            <!-- YouTube Trailer -->
+            <div id="modal-game-trailer-container" class="mt-4 mb-4 hidden">
+                <div class="relative pt-[56.25%]"> <!-- 16:9 Aspect Ratio -->
+                    <iframe id="modal-game-trailer-iframe" class="absolute top-0 left-0 w-full h-full rounded-lg" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <!-- Pre-defined description -->
+            <div class="mt-4 p-4 bg-gray-800 rounded-lg max-h-60 overflow-y-auto scrollbar-hide">
+                <h3 class="text-gray-100 text-lg font-semibold mb-2">Descrição:</h3>
+                <p id="modal-game-description" class="text-gray-300 text-sm leading-relaxed"></p>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-800">
+                <a id="modal-game-download-link" href="#" target="_blank" rel="noopener noreferrer" class="w-full block text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:scale-105">
+                    Fazer Download
+                </a>
+                <p id="modal-no-download-link" class="text-red-400 text-center mt-2 hidden">Link de download não disponível.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Show All Category Games Modal -->
+    <div id="all-category-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-40 hidden">
+        <div class="bg-gray-900 rounded-lg p-6 w-full max-w-4xl lg:max-w-6xl xl:max-w-7xl shadow-xl border border-gray-700 relative max-h-[90vh] overflow-y-auto">
+            <button id="close-all-category-modal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-100 text-2xl font-bold">
+                &times;
+            </button>
+            <h2 id="all-category-title" class="text-gray-100 text-3xl font-bold mb-6 text-center"></h2>
+            <div id="all-category-games-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <!-- Games will be dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- AdBlock Detector Placeholder (hidden) -->
+    <div id="ad-placeholder" class="ad-banner"></div>
+
+    <!-- AdBlock Alert Modal -->
+    <div id="adblock-modal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4 z-[9999] hidden">
+        <div class="bg-gray-800 rounded-lg p-8 text-center shadow-2xl border border-red-600">
+            <h2 class="text-red-500 text-3xl font-bold mb-4">AdBlock Detectado!</h2>
+            <p class="text-gray-200 text-lg mb-6">
+                Para ter a melhor experiência no GameFlix, por favor, desative seu AdBlocker.
+                Algumas funcionalidades podem não funcionar corretamente com ele ativo.
+            </p>
+            <button id="adblock-dismiss" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition duration-300">
+                Entendi
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer (simple) -->
+    <footer class="bg-gray-900 p-4 text-center text-gray-400 text-sm rounded-t-lg mt-8">
+        © 2025 GameFlix. Todos os direitos reservados.
+    </footer>
+
+    <script>
+        // Configurações Globais
+        const MY_EMAIL_ADDRESS = 'marquesjul38@gmail.com'; // <--- COLOQUE SEU E-MAIL AQUI!
+
+        // Data for games and emulators
+        const games = {
+            'PlayStation 2': [
+                { id: 1, title: 'God of War II', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/f/f6/God_of_War_II_Coverart.jpg', description: 'Uma épica aventura de Kratos em busca de vingança contra os deuses do Olimpo.', downloadLink: 'https://sto.romsfast.com/PS2-Redump/God%20of%20War%20II%20(USA).zip?token=c3xZcFs0XFROQ3F1DX5QNFhRTkVxcg9%2BV2NbWU5HcHxbfllmDVgIEHZxWXJXaF1QRw%3D%3D', youtubeTrailerUrl: 'https://www.youtube.com/embed/f0XhT8c3x5E' }, // Example YouTube ID
+                { id: 2, title: 'Grand Theft Auto: San Andreas', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/0/07/Grand_Theft_Auto_San_Andreas_Cover_Art.jpg', description: 'Explore o vasto estado de San Andreas como CJ, em uma jornada de crime e redenção nos anos 90.', downloadLink: 'https://example.com/gtasa.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/Yv33hQ6s37A' },
+                { id: 3, title: 'Resident Evil 4', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e0/Resident_Evil_4_cover.png/220px-Resident_Evil_4_cover.png', description: 'Leon S. Kennedy deve resgatar a filha do presidente em uma vila rural infestada por um novo tipo de horror.', downloadLink: 'https://example.com/re4.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/qN_xVntXG9s' },
+                { id: 4, title: 'Metal Gear Solid 3: Snake Eater', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/b/b3/Metal_Gear_Solid_3_Snake_Eater_Game_Cover.jpeg', description: 'Uma obra-prima de espionagem e sobrevivência na Guerra Fria, com Naked Snake em uma missão secreta.', downloadLink: 'https://example.com/mgs3.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/z-m5pX35c6k' },
+                { id: 5, title: 'Kingdom Hearts II', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/e/e1/Kingdom_Hearts_II_cover.jpg', description: 'Sora continua sua jornada através de mundos Disney e Final Fantasy, lutando contra as trevas e buscando seus amigos.', downloadLink: 'https://example.com/kh2.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/3n4O-kQ2M8w' },
+                { id: 6, title: 'Shadow of the Colossus', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/6/6c/Shadow_of_the_Colossus_cover.jpg', description: 'Um jovem guerreiro deve derrotar dezesseis colossos gigantes para ressuscitar uma garota.', downloadLink: 'https://example.com/sotc.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/PdS3B6l4G8M' },
+                { id: 35, title: 'Final Fantasy X', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Final_Fantasy_X_box_art_render.png/220px-Final_Fantasy_X_box_art_render.png', description: 'Uma jornada épica para derrotar Sin e salvar o mundo de Spira.', downloadLink: 'https://example.com/ffx.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/X0v0l8X_VfA' },
+                { id: 36, title: 'Okami', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/d/de/Okami_box_art.jpg', description: 'Assuma o papel da deusa do sol Amaterasu para restaurar a beleza do mundo.', downloadLink: 'https://example.com/okami.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/OW1uG7JjN68' },
+                { id: 37, title: 'Persona 3 FES', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/b/b7/Persona_3_FES_box_art.jpg', description: 'Explore a Dark Hour e os mistérios da Tartarus neste aclamado RPG.', downloadLink: 'https://example.com/p3fes.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/0W10gI5b47Q' },
+                { id: 38, title: 'Jak II', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/f/f5/Jak_II_cover.jpg', description: 'Aventure-se em Haven City com Jak e Daxter em uma sequência mais sombria e cheia de ação.', downloadLink: 'https://example.com/jak2.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/F5WzFm8B5aY' },
+                { id: 39, title: 'Ratchet & Clank: Up Your Arsenal', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/4/4b/Ratchet_%26_Clank_Up_Your_Arsenal.jpg', description: 'Ratchet e Clank enfrentam o Dr. Nefarious em uma aventura galáctica repleta de armas e humor.', downloadLink: 'https://example.com/ratchet3.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/hE1jE2fNfP8' },
+                { id: 40, title: 'Burnout 3: Takedown', platform: 'PlayStation 2', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/a/a2/Burnout_3_Takedown_Coverart.png', description: 'Corridas de alta velocidade e batidas cinematográficas neste jogo de corrida inovador.', downloadLink: 'https://example.com/burnout3.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/M7r36Y-1j1M' },
+            ],
+            'PlayStation 3': [
+                { id: 7, title: 'The Last of Us', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/4/46/Video_Game_Cover_-_The_Last_of_Us.jpg', description: 'Uma emocionante história de sobrevivência em um mundo pós-apocalíptico, onde Joel e Ellie lutam para sobreviver.', downloadLink: 'https://example.com/tlou.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/kE7li_u1nmg?si=aGmlQWlzZDUTPOHM' },
+                { id: 8, title: 'Grand Theft Auto V', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png', description: 'Entre no mundo de Los Santos com três protagonistas, em uma trama cheia de ação e humor negro.', downloadLink: 'https://example.com/gtav.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/QkkoKzZ-5V8' },
+                { id: 9, title: 'Uncharted 2: Among Thieves', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/f/f7/Uncharted_2_Among_Thieves_cover.jpg', description: 'Nathan Drake embarca em uma caçada global por um tesouro legendário, enfrentando perigos e inimigos.', downloadLink: 'https://example.com/uncharted2.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/ggJ_rT3iV8E' },
+                { id: 10, title: 'Red Dead Redemption', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/1/1b/Red_Dead_Redemption_cover.jpg', description: 'John Marston, um ex-fora da lei, é forçado a caçar sua antiga gangue para proteger sua família no Velho Oeste.', downloadLink: 'https://example.com/rdr.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/btU-iSx1f1M' },
+                { id: 11, title: 'God of War III', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/c/c5/God_of_War_III_cover.jpg', description: 'Kratos escala o Monte Olimpo em sua vingança final contra os deuses, em um espetáculo de proporções épicas.', downloadLink: 'https://example.com/gow3.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/DqM24p3W_1k' },
+                { id: 41, title: 'Metal Gear Solid 4: Guns of the Patriots', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/a/a5/Metal_Gear_Solid_4_Guns_of_the_Patriots_cover.jpg', description: 'Solid Snake embarca em sua última missão para deter Liquid Ocelot e o sistema Sons of the Patriots.', downloadLink: 'https://example.com/mgs4.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/B4fM4r41R38' },
+                { id: 42, title: 'Bioshock Infinite', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/c/c5/BioShock_Infinite_cover.png', description: 'Explore a cidade flutuante de Columbia em uma distopia steampunk com poderes especiais.', downloadLink: 'https://example.com/bioshock-infinite.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/MnGvA3tYy_4' },
+                { id: 43, title: 'Journey', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Journey_game_cover.jpg/220px-Journey_game_cover.jpg', description: 'Uma jornada visualmente deslumbrante e emocionalmente tocante através de um deserto misterioso.', downloadLink: 'https://example.com/journey.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/mU3nrmfE7mY' },
+                { id: 44, title: 'Heavy Rain', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f3/Heavy_Rain_Coverart.jpg/220px-Heavy_Rain_Coverart.jpg', description: 'Um thriller interativo onde você controla quatro personagens em busca de um assassino em série.', downloadLink: 'https://example.com/heavy-rain.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/d62YpB7W_e0' },
+                { id: 45, title: 'LittleBigPlanet', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e0/Littlebigplanet_cover.jpg/220px-Littlebigplanet_cover.jpg', description: 'Um jogo de plataforma criativo onde você pode jogar, criar e compartilhar seus próprios níveis.', downloadLink: 'https://example.com/lbp.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/e8B3W40T1jQ' },
+                { id: 46, title: 'Infamous', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/1/1d/Infamous_cover.png', description: 'Um herói com superpoderes decide o destino de Empire City neste jogo de ação de mundo aberto.', downloadLink: 'https://example.com/infamous.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/M95iM8C5-Wk' },
+                { id: 47, title: 'Demon\'s Souls', platform: 'PlayStation 3', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/1/15/Demon%27s_Souls_Coverart.jpg', description: 'Um RPG de ação desafiador que te leva a um mundo sombrio e implacável.', downloadLink: 'https://example.com/demons-souls.pkg', youtubeTrailerUrl: 'https://www.youtube.com/embed/M-m4xT_k9Lw' },
+            ],
+            'PlayStation 1': [
+                { id: 12, title: 'Final Fantasy VII', platform: 'PlayStation 1', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/c/c2/FFVII_North_American_cover_art.jpg', description: 'Aventure-se com Cloud Strife e seus companheiros para salvar o planeta de Sephiroth e da Shinra.', downloadLink: 'https://example.com/ff7.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/Qy_v9w_E3wQ' },
+                { id: 13, title: 'Metal Gear Solid', platform: 'PlayStation 1', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/1/1a/Metal_Gear_Solid_cover_art.png', description: 'Solid Snake se infiltra em uma instalação de armas nucleares para impedir um ataque terrorista.', downloadLink: 'https://example.com/mgs.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/B-dKqW_B97E' },
+                { id: 14, title: 'Resident Evil 2', platform: 'PlayStation 1', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/3/3c/Resident_Evil_2_cover.jpg', description: 'Sobreviva a um surto zumbi em Raccoon City como Leon Kennedy ou Claire Redfield.', downloadLink: 'https://example.com/re2.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/c0_J1o3oP7U' },
+                { id: 15, title: 'Crash Bandicoot 3: Warped', platform: 'PlayStation 1', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/f/f3/Crash_Bandicoot_3_Warped_Coverart.png', description: 'Crash e Coco viajam no tempo para coletar cristais e impedir Cortex e Uka Uka.', downloadLink: 'https://example.com/crash3.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/j80_N2lS-eE' },
+            ],
+            'PSP': [
+                { id: 16, title: 'God of War: Chains of Olympus', platform: 'PSP', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/0/07/God_of_War_Chains_of_Olympus_PSP.jpg', description: 'Kratos enfrenta os horrores do submundo em uma prequela da série principal.', downloadLink: 'https://example.com/gowcoo.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/d0G5s2c4eJg' },
+                { id: 17, title: 'Monster Hunter Freedom Unite', platform: 'PSP', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/c/c9/Monster_Hunter_Freedom_Unite_cover.jpg', description: 'Cace monstros gigantes e colete recursos para criar equipamentos neste RPG de ação.', downloadLink: 'https://example.com/mhfu.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/v8yB-8eB8kQ' },
+                { id: 18, title: 'Grand Theft Auto: Liberty City Stories', platform: 'PSP', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/c/c3/Grand_Theft_Auto_Liberty_City_Stories_cover.jpg', description: 'Retorne a Liberty City em uma história inédita com Toni Cipriani, um capanga da máfia.', downloadLink: 'https://example.com/gtalcs.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/xW8R1-m74Fw' },
+            ],
+            'PS Vita': [
+                { id: 19, title: 'Persona 4 Golden', platform: 'PS Vita', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/a/a2/Persona_4_Golden.jpg', description: 'Desvende mistérios e explore o mundo de Persona em um RPG com elementos de simulação de vida.', downloadLink: 'https://example.com/p4g.vpk', youtubeTrailerUrl: 'https://www.youtube.com/embed/E_Qx-Q_Z96M' },
+                { id: 20, title: 'Uncharted: Golden Abyss', platform: 'PS Vita', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/f/f6/Uncharted_Golden_Abyss_cover.png', description: 'Nathan Drake embarca em uma nova aventura exclusiva para PS Vita, cheia de ação e mistérios.', downloadLink: 'https://example.com/unchartedga.vpk', youtubeTrailerUrl: 'https://www.youtube.com/embed/0Y8-R1_d3f0' },
+            ],
+            'Xbox 360': [
+                { id: 21, title: 'Halo 3', platform: 'Xbox 360', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/b/b3/Halo_3_final_boxshot.JPG', description: 'Master Chief lidera a humanidade em sua luta final contra o Pacto e a ameaça Flood.', downloadLink: 'https://example.com/halo3.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/Xal_p6bT_1Y' },
+                { id: 22, title: 'Gears of War', platform: 'Xbox 360', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/3/30/Gears_of_War_box_art.jpg', description: 'Lute contra a horda Locust com Marcus Fenix e a equipe Delta neste shooter de cobertura intenso.', downloadLink: 'https://example.com/gow360.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/oj6B43f8M7c' },
+                { id: 23, title: 'Fable II', platform: 'Xbox 360', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/8/86/Fable_II_box_art.jpg', description: 'As suas escolhas moldam o destino de um herói em Albion neste RPG de mundo aberto.', downloadLink: 'https://example.com/fable2.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/YQ0rY2-6U9M' },
+                { id: 24, title: 'Mass Effect 2', platform: 'Xbox 360', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/c/c5/MassEffect2_boxart.jpg', description: 'Comandante Shepard embarca em uma missão suicida para salvar a galáxia da extinção iminente.', downloadLink: 'https://example.com/me2.iso', youtubeTrailerUrl: 'https://www.youtube.com/embed/n8J5tN97SKE' },
+            ],
+            'Super Nintendo': [
+                { id: 25, title: 'The Legend of Zelda: A Link to the Past', platform: 'Super Nintendo', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/2/21/The_Legend_of_Zelda_A_Link_to_the_Past_SNES_box_art.jpg', description: 'Ajude Link a salvar Hyrule do mal em uma das mais aclamadas aventuras de Zelda.', downloadLink: 'https://example.com/zelda-lttp.sfc', youtubeTrailerUrl: 'https://www.youtube.com/embed/N17N55wQ9rQ' },
+                { id: 26, title: 'Super Metroid', platform: 'Super Nintendo', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/e/e0/Super_Metroid_box.jpg', description: 'Samus Aran explora o planeta Zebes em busca do último Metroid.', downloadLink: 'https://example.com/super-metroid.sfc', youtubeTrailerUrl: 'https://www.youtube.com/embed/sP-w14qF_1o' },
+                { id: 27, title: 'Super Mario World', platform: 'Super Nintendo', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/3/32/Super_Mario_World_Coverart.png', description: 'Mario e Luigi embarcam em uma nova aventura no Dinosaur Land para resgatar a Princesa Peach.', downloadLink: 'https://example.com/smw.sfc', youtubeTrailerUrl: 'https://www.youtube.com/embed/b_t0KjE1qfE' },
+                { id: 28, title: 'Chrono Trigger', platform: 'Super Nintendo', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/3/3a/Chrono_Trigger_SNES_box_art.jpg', description: 'Viaje no tempo para mudar o curso da história e salvar o futuro em um RPG épico.', downloadLink: 'https://example.com/chrono-trigger.sfc', youtubeTrailerUrl: 'https://www.youtube.com/embed/rNlU7g6_T1k' },
+            ],
+            'Nintendo Switch': [
+                { id: 29, title: 'The Legend of Zelda: Breath of the Wild', platform: 'Nintendo Switch', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/c/c6/The_Legend_of_Zelda_Breath_of_the_Wild.jpg', description: 'Explore um vasto e deslumbrante Hyrule enquanto Link tenta recuperar suas memórias e derrotar Calamity Ganon.', downloadLink: 'https://example.com/botw.nsp', youtubeTrailerUrl: 'https://www.youtube.com/embed/zw47_q9C0yM' },
+                { id: 30, title: 'Super Mario Odyssey', platform: 'Nintendo Switch', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/b/b1/Super_Mario_Odyssey.jpg', description: 'Junte-se a Mario e Cappy em uma aventura global para salvar a Princesa Peach do Bowser.', downloadLink: 'https://example.com/smo.nsp', youtubeTrailerUrl: 'https://www.youtube.com/embed/h8V1t5y9n1k' },
+                { id: 31, title: 'Animal Crossing: New Horizons', platform: 'Nintendo Switch', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/1/12/Animal_Crossing_New_Horizons.jpg', description: 'Crie seu próprio paraíso em uma ilha deserta, personalize sua casa e interaja com moradores adoráveis.', downloadLink: 'https://example.com/acnh.nsp', youtubeTrailerUrl: 'https://www.youtube.com/embed/mtykM5-J5R0' },
+            ],
+            'PC': [
+                { id: 32, title: 'Cyberpunk 2077', platform: 'PC', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/9/9f/Cyberpunk_2077_cover_art.jpg', description: 'Explore a megalópole futurista de Night City como um mercenário em busca de um implante único.', downloadLink: 'https://example.com/cyberpunk2077.zip', youtubeTrailerUrl: 'https://www.youtube.com/embed/8X2kIfS6eTE' },
+                { id: 33, title: 'The Witcher 3: Wild Hunt', platform: 'PC', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/0/0c/Witcher_3_Wild_Hunt_cover_art.jpg', description: 'Torne-se Geralt de Rívia, um caçador de monstros, em uma vasta aventura de mundo aberto.', downloadLink: 'https://example.com/witcher3.zip', youtubeTrailerUrl: 'https://www.youtube.com/embed/hY7g1hV0IeM' },
+                { id: 34, title: 'Baldur\'s Gate 3', platform: 'PC', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/c/c2/Baldur%27s_Gate_3_cover_art.jpg', description: 'Um RPG épico baseado em Dungeons & Dragons, onde suas escolhas impactam o destino do mundo.', downloadLink: 'https://example.com/bg3.zip', youtubeTrailerUrl: 'https://www.youtube.com/embed/KEh1q0K1G3o' },
+            ],
+        };
+
+        const emulators = [
+            { id: 1, name: 'PCSX2', platforms: 'PlayStation 2', description: 'O principal emulador de PS2.', downloadUrl: 'https://pcsx2.net/' },
+            { id: 2, name: 'PPSSPP', platforms: 'PSP', description: 'Um emulador PSP rápido e portátil.', downloadUrl: 'https://www.ppsspp.org/' },
+            { id: 3, name: 'ePSXe', platforms: 'PlayStation 1', description: 'Emulador de PS1 popular e fácil de usar.', downloadUrl: 'https://www.epsxe.com/' },
+            { id: 4, name: 'Dolphin', platforms: 'GameCube, Wii', description: 'Emulador para GameCube e Wii.', downloadUrl: 'https://dolphin-emu.org/' },
+            { id: 5, name: 'Snes9x', platforms: 'Super Nintendo', description: 'Emulador clássico de SNES.', downloadUrl: 'https://www.snes9x.com/' },
+            { id: 6, name: 'Xenia', platforms: 'Xbox 360', description: 'Emulador experimental de Xbox 360.', downloadUrl: 'https://github.com/xenia-project/xenia' },
+            { id: 7, name: 'Citra', platforms: 'Nintendo 3DS', description: 'Emulador para Nintendo 3DS.', downloadUrl: 'https://citra-emu.org/' },
+            { id: 8, name: 'Ryujinx', platforms: 'Nintendo Switch', description: 'Emulador de Nintendo Switch com alta compatibilidade.', downloadUrl: 'https://ryujinx.org/' },
+        ];
+
+        // Global state variables
+        let currentPage = 'home';
+        let activePlatform = 'Todas as Plataformas';
+        let searchTerm = '';
+
+        // DOM elements
+        const mainContent = document.getElementById('main-content');
+        const navHomeButton = document.getElementById('nav-home');
+        const navEmulatorsButton = document.getElementById('nav-emulators');
+        const navContactButton = document.getElementById('nav-contact'); // New contact button
+        const navHelpProjectButton = document.getElementById('nav-help-project'); // New help project button
+        const searchInput = document.getElementById('search-input');
+
+        const mobileNavGamesButton = document.getElementById('mobile-nav-games');
+        const mobileNavEmulatorsButton = document.getElementById('mobile-nav-emulators');
+        const mobileNavContactButton = document.getElementById('mobile-nav-contact'); // New mobile contact button
+        const mobileNavHelpProjectButton = document.getElementById('mobile-nav-help-project'); // New mobile help project button
+        const mobilePlatformDropdown = document.getElementById('mobile-platform-dropdown');
+        const mobilePlatformSelect = document.getElementById('mobile-platform-select');
+
+        const gameDescriptionModal = document.getElementById('game-description-modal');
+        const closeDescriptionModalButton = document.getElementById('close-description-modal');
+        const modalGameTitle = document.getElementById('modal-game-title');
+        const modalGameImage = document.getElementById('modal-game-image');
+        const modalGamePlatform = document.getElementById('modal-game-platform');
+        const modalGameTrailerContainer = document.getElementById('modal-game-trailer-container');
+        const modalGameTrailerIframe = document.getElementById('modal-game-trailer-iframe');
+        const modalGameDescription = document.getElementById('modal-game-description');
+        const modalGameDownloadLink = document.getElementById('modal-game-download-link');
+        const modalNoDownloadLink = document.getElementById('modal-no-download-link');
+
+        const allCategoryModal = document.getElementById('all-category-modal');
+        const closeAllCategoryModalButton = document.getElementById('close-all-category-modal');
+        const allCategoryTitle = document.getElementById('all-category-title');
+        const allCategoryGamesGrid = document.getElementById('all-category-games-grid');
+
+        const adblockModal = document.getElementById('adblock-modal');
+        const adblockDismissButton = document.getElementById('adblock-dismiss');
+        const adPlaceholder = document.getElementById('ad-placeholder');
+
+
+        // --- Helper Functions ---
+
+        function createGameCard(game, isCompact = false) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = `flex-none mr-4 bg-gray-900 rounded-lg overflow-hidden shadow-lg transform transition-transform duration-300 hover:scale-105 cursor-pointer
+                ${isCompact ? 'w-28 h-48 sm:w-32 sm:h-56 md:w-36 md:h-64' : 'w-36 sm:w-40 md:w-48 lg:w-56 xl:w-64'}`;
+
+            const img = document.createElement('img');
+            img.src = game.imageUrl;
+            img.alt = game.title;
+            img.className = `w-full object-cover rounded-t-lg ${isCompact ? 'h-36 sm:h-44 md:h-52' : 'h-48 sm:h-56 md:h-64'}`;
+            img.onerror = () => {
+                img.onerror = null;
+                img.src = `https://placehold.co/${isCompact ? '112x144' : '150x220'}/374151/e2e8f0?text=${encodeURIComponent(game.title + ' Capa Não Encontrada')}`;
+            };
+
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'p-3 text-center';
+            const h3 = document.createElement('h3');
+            h3.className = 'text-gray-100 text-sm sm:text-base font-semibold truncate';
+            h3.textContent = game.title;
+            titleDiv.appendChild(h3);
+
+            cardDiv.appendChild(img);
+            cardDiv.appendChild(titleDiv);
+
+            cardDiv.addEventListener('click', () => openDescriptionModal(game));
+            return cardDiv;
+        }
+
+        function renderGameRow(platformName, gamesList, initialLimit = 10) {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'mb-8 px-4 sm:px-6 lg:px-8';
+
+            const h2 = document.createElement('h2');
+            h2.className = 'text-gray-100 text-xl sm:text-2xl font-bold mb-4';
+            h2.textContent = platformName;
+            rowDiv.appendChild(h2);
+
+            const carouselWrapper = document.createElement('div');
+            carouselWrapper.className = 'relative flex items-center group'; // Wrapper for carousel and arrows
+
+            const leftArrow = document.createElement('button');
+            leftArrow.className = 'absolute left-0 z-10 p-2 bg-black bg-opacity-50 rounded-full text-white hidden group-hover:block lg:block focus:outline-none -ml-4'; // Added lg:block
+            leftArrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                   </svg>`;
+            leftArrow.addEventListener('click', () => {
+                carouselDiv.scrollBy({ left: -carouselDiv.offsetWidth, behavior: 'smooth' });
+            });
+            carouselWrapper.appendChild(leftArrow);
+
+            const carouselDiv = document.createElement('div');
+            carouselDiv.className = 'flex overflow-x-auto pb-4 scrollbar-hide flex-grow';
+
+            const displayedGames = gamesList.slice(0, initialLimit);
+            const hasMoreGames = gamesList.length > initialLimit;
+
+            displayedGames.forEach(game => {
+                carouselDiv.appendChild(createGameCard(game, false)); // Not compact in carousel
+            });
+
+            if (hasMoreGames) {
+                const showMoreContainer = document.createElement('div');
+                showMoreContainer.className = 'flex-none w-36 sm:w-40 md:w-48 lg:w-56 xl:w-64 mr-4 bg-gray-800 rounded-lg overflow-hidden shadow-lg transform transition-transform duration-300 hover:scale-105 cursor-pointer flex items-center justify-center p-4';
+                const showMoreButton = document.createElement('button');
+                showMoreButton.className = 'text-white text-lg font-bold py-2 px-4 rounded-full bg-red-600 hover:bg-red-700 transition-colors duration-200';
+                showMoreButton.textContent = 'Mostrar Mais';
+                showMoreButton.addEventListener('click', () => openAllCategoryModal(platformName, gamesList));
+                showMoreContainer.appendChild(showMoreButton);
+                carouselDiv.appendChild(showMoreContainer);
+            }
+            carouselWrapper.appendChild(carouselDiv);
+
+            const rightArrow = document.createElement('button');
+            rightArrow.className = 'absolute right-0 z-10 p-2 bg-black bg-opacity-50 rounded-full text-white hidden group-hover:block lg:block focus:outline-none -mr-4'; // Added lg:block
+            rightArrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>`;
+            rightArrow.addEventListener('click', () => {
+                carouselDiv.scrollBy({ left: carouselDiv.offsetWidth, behavior: 'smooth' });
+            });
+            carouselWrapper.appendChild(rightArrow);
+
+
+            rowDiv.appendChild(carouselWrapper); // Append the wrapper
+            mainContent.appendChild(rowDiv);
+        }
+
+        function createEmulatorCard(emulator) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'bg-gray-900 rounded-lg p-6 shadow-lg transform transition-transform duration-300 hover:scale-105 flex flex-col items-center text-center';
+
+            const h3 = document.createElement('h3');
+            h3.className = 'text-gray-100 text-xl font-bold mb-2';
+            h3.textContent = emulator.name;
+
+            const platformsP = document.createElement('p');
+            platformsP.className = 'text-gray-300 text-sm mb-2';
+            platformsP.textContent = `Plataformas: ${emulator.platforms}`;
+
+            const descriptionP = document.createElement('p');
+            descriptionP.className = 'text-gray-400 text-sm mb-4 flex-grow';
+            descriptionP.textContent = emulator.description;
+
+            const downloadLink = document.createElement('a');
+            downloadLink.href = emulator.downloadUrl;
+            downloadLink.target = '_blank';
+            downloadLink.rel = 'noopener noreferrer';
+            downloadLink.className = 'mt-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:scale-105';
+            downloadLink.textContent = 'Baixar';
+
+            cardDiv.appendChild(h3);
+            cardDiv.appendChild(platformsP);
+            cardDiv.appendChild(descriptionP);
+            cardDiv.appendChild(downloadLink);
+
+            return cardDiv;
+        }
+
+        // --- Modal Functions ---
+
+        function openDescriptionModal(game) {
+            modalGameTitle.textContent = game.title;
+            modalGameImage.src = game.imageUrl;
+            modalGameImage.alt = game.title;
+            // Fallback for image
+            modalGameImage.onerror = () => {
+                modalGameImage.onerror = null;
+                modalGameImage.src = `https://placehold.co/128x128/374151/e2e8f0?text=${encodeURIComponent(game.title + ' Capa Não Encontrada')}`;
+            };
+            modalGamePlatform.textContent = `Plataforma: ${game.platform}`;
+            modalGameDescription.textContent = game.description || 'Nenhuma descrição disponível para este jogo.';
+
+            // Check if youtubeTrailerUrl is provided
+            if (game.youtubeTrailerUrl) {
+                modalGameTrailerIframe.src = game.youtubeTrailerUrl; // Use the full URL directly
+                modalGameTrailerContainer.classList.remove('hidden');
+            } else {
+                modalGameTrailerIframe.src = ''; // Clear iframe src
+                modalGameTrailerContainer.classList.add('hidden');
+            }
+
+            if (game.downloadLink) {
+                modalGameDownloadLink.href = game.downloadLink;
+                modalGameDownloadLink.classList.remove('hidden');
+                modalNoDownloadLink.classList.add('hidden');
+            } else {
+                modalGameDownloadLink.classList.add('hidden');
+                modalNoDownloadLink.classList.remove('hidden');
+            }
+
+            gameDescriptionModal.classList.remove('hidden');
+        }
+
+        function hideDescriptionModal() {
+            gameDescriptionModal.classList.add('hidden');
+            modalGameTrailerIframe.src = ''; // Stop video playback
+        }
+
+        function openAllCategoryModal(platformName, gamesList) {
+            allCategoryTitle.textContent = `Todos os Jogos de ${platformName}`;
+            allCategoryGamesGrid.innerHTML = ''; // Clear previous games
+
+            gamesList.forEach(game => {
+                allCategoryGamesGrid.appendChild(createGameCard(game, true)); // Compact size in grid modal
+            });
+
+            allCategoryModal.classList.remove('hidden');
+        }
+
+        function hideAllCategoryModal() {
+            allCategoryModal.classList.add('hidden');
+        }
+
+        // --- Page Rendering Functions ---
+
+        function getFilteredGames() {
+            if (searchTerm) {
+                const lowerCaseSearchTerm = searchTerm.toLowerCase();
+                const allGamesFlat = Object.values(games).flat();
+                const matchingGames = allGamesFlat.filter(game =>
+                    game.title.toLowerCase().includes(lowerCaseSearchTerm)
+                );
+
+                const groupedMatches = {};
+                matchingGames.forEach(game => {
+                    if (!groupedMatches[game.platform]) {
+                        groupedMatches[game.platform] = [];
+                    }
+                    groupedMatches[game.platform].push(game);
+                });
+                return groupedMatches;
+            } else {
+                return activePlatform === 'Todas as Plataformas'
+                    ? games
+                    : { [activePlatform]: games[activePlatform] || [] };
+            }
+        }
+
+        function renderHomePage() {
+            mainContent.innerHTML = ''; // Clear current content
+            mobilePlatformDropdown.classList.remove('hidden'); // Show dropdown on home
+
+            const currentFilteredGames = getFilteredGames();
+
+            if (Object.keys(currentFilteredGames).length > 0) {
+                for (const platformName in currentFilteredGames) {
+                    // When searching, no limit on display, so pass all games
+                    const limit = searchTerm ? currentFilteredGames[platformName].length : 10;
+                    renderGameRow(platformName, currentFilteredGames[platformName], limit);
+                }
+            } else {
+                const noGamesDiv = document.createElement('div');
+                noGamesDiv.className = 'text-center text-gray-400 text-lg mt-10';
+                noGamesDiv.textContent = searchTerm ? `Nenhum jogo encontrado para "${searchTerm}".` : 'Nenhum jogo encontrado para esta plataforma.';
+                mainContent.appendChild(noGamesDiv);
+            }
+        }
+
+        function renderEmulatorsPage() {
+            mainContent.innerHTML = ''; // Clear current content
+            mobilePlatformDropdown.classList.add('hidden'); // Hide dropdown on emulators page
+
+            const h2 = document.createElement('h2');
+            h2.className = 'text-gray-100 text-3xl font-bold mb-6 text-center';
+            h2.textContent = 'Emuladores Disponíveis';
+            mainContent.appendChild(h2);
+
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4 sm:px-6 lg:px-8';
+
+            emulators.forEach(emulator => {
+                gridDiv.appendChild(createEmulatorCard(emulator));
+            });
+            mainContent.appendChild(gridDiv);
+
+            const disclaimerP = document.createElement('p');
+            disclaimerP.className = 'text-gray-400 text-sm mt-8 text-center px-4 sm:px-6 lg:px-8';
+            disclaimerP.textContent = '*Os links de download são para os sites oficiais ou páginas de projeto dos emuladores. Certifique-se de baixar de fontes confiáveis.';
+            mainContent.appendChild(disclaimerP);
+        }
+
+        function renderContactPage() {
+            mainContent.innerHTML = `
+                <div class="px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto py-8">
+                    <h2 class="text-gray-100 text-3xl font-bold mb-6 text-center">Entre em Contato</h2>
+                    <p class="text-gray-300 text-center mb-8">
+                        Use o formulário abaixo para solicitar um jogo, reportar um link quebrado ou enviar qualquer feedback.
+                    </p>
+                    <div class="bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-700">
+                        <div class="mb-4">
+                            <label for="contact-reason" class="block text-gray-300 text-sm font-bold mb-2">Motivo do Contato:</label>
+                            <select id="contact-reason" class="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-red-600 focus:border-transparent">
+                                <option value="Solicitação de Jogo">Solicitação de Jogo</option>
+                                <option value="Reportar Link Quebrado">Reportar Link Quebrado</option>
+                                <option value="Sugestão">Sugestão</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label for="contact-game-title" class="block text-gray-300 text-sm font-bold mb-2">Título do Jogo (se aplicável):</label>
+                            <input type="text" id="contact-game-title" class="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-red-600 focus:border-transparent" placeholder="Nome do jogo">
+                        </div>
+                        <div class="mb-4">
+                            <label for="contact-message" class="block text-gray-300 text-sm font-bold mb-2">Sua Mensagem:</label>
+                            <textarea id="contact-message" rows="5" class="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-red-600 focus:border-transparent" placeholder="Detalhes da sua solicitação ou problema..."></textarea>
+                        </div>
+                        <div class="mb-6">
+                            <label for="contact-email" class="block text-gray-300 text-sm font-bold mb-2">Seu E-mail para Contato:</label>
+                            <input type="email" id="contact-email" class="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-red-600 focus:border-transparent" placeholder="seu.email@exemplo.com">
+                        </div>
+                        <button id="send-contact-email" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:scale-105 w-full">
+                            Enviar Mensagem
+                        </button>
+                    </div>
+                </div>
+            `;
+            mobilePlatformDropdown.classList.add('hidden'); // Hide dropdown on contact page
+
+            // Add event listener for the Send Email button
+            document.getElementById('send-contact-email').addEventListener('click', () => {
+                const reason = document.getElementById('contact-reason').value;
+                const gameTitle = document.getElementById('contact-game-title').value;
+                const message = document.getElementById('contact-message').value;
+                const userEmail = document.getElementById('contact-email').value;
+
+                let subject = `GameFlix Contato: ${reason}`;
+                let body = `Motivo: ${reason}\n`;
+                if (gameTitle) {
+                    body += `Título do Jogo: ${gameTitle}\n`;
+                }
+                body += `Mensagem: ${message}\n\n`;
+                body += `E-mail para Contato: ${userEmail}\n`;
+
+                // Encode subject and body for URL
+                const encodedSubject = encodeURIComponent(subject);
+                const encodedBody = encodeURIComponent(body);
+
+                // Open default email client
+                window.location.href = `mailto:${MY_EMAIL_ADDRESS}?subject=${encodedSubject}&body=${encodedBody}`;
+            });
+        }
+
+        function renderHelpProjectPage() {
+            mainContent.innerHTML = `
+                <div class="px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto py-8 text-center">
+                    <h2 class="text-gray-100 text-3xl font-bold mb-6">💖 Ajude a Manter Este Projeto Vivo!</h2>
+                    <p class="text-gray-300 text-lg mb-4 leading-relaxed">
+                        Este site foi criado com muito carinho para todos que amam reviver os clássicos dos videogames.
+                        Aqui você pode baixar ROMs e emuladores sem pagar nada e, o melhor, sem anúncios chatos ou redirecionamentos perigosos.
+                    </p>
+                    <p class="text-gray-300 text-lg mb-6 leading-relaxed">
+                        ✨ Mas para continuar assim — gratuito, limpo e acessível para todos — precisamos da sua ajuda.
+                    </p>
+                    <p class="text-gray-300 text-lg mb-6 leading-relaxed">
+                        Manter o site no ar envolve custos com servidores, manutenção e segurança.
+                        Se você curte o projeto e quer apoiar essa ideia, considere fazer uma doação.
+                        Qualquer valor já faz diferença e nos ajuda a continuar oferecendo uma experiência nostálgica e segura para todos os fãs de jogos retrô.
+                    </p>
+                    <p class="text-gray-300 text-lg mb-8 leading-relaxed">
+                        🎮 Doe agora e ajude a manter viva a memória dos jogos que marcaram gerações!
+                    </p>
+                    <!-- Optionally, you can add a donation button/link here -->
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 ease-in-out transform hover:scale-105">
+                        Fazer Doação (Exemplo)
+                    </button>
+                </div>
+            `;
+            mobilePlatformDropdown.classList.add('hidden'); // Hide dropdown on this page
+        }
+
+        function renderCurrentPage() {
+            // Update active navigation buttons styling
+            navHomeButton.classList.remove('bg-red-600', 'text-white', 'shadow-md');
+            navHomeButton.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+            navEmulatorsButton.classList.remove('bg-red-600', 'text-white', 'shadow-md');
+            navEmulatorsButton.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+            navContactButton.classList.remove('bg-red-600', 'text-white', 'shadow-md');
+            navContactButton.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+            navHelpProjectButton.classList.remove('bg-red-600', 'text-white', 'shadow-md');
+            navHelpProjectButton.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+
+            mobileNavGamesButton.classList.remove('bg-red-600', 'text-white', 'shadow-md');
+            mobileNavGamesButton.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+            mobileNavEmulatorsButton.classList.remove('bg-red-600', 'text-white', 'shadow-md');
+            mobileNavEmulatorsButton.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+            mobileNavContactButton.classList.remove('bg-red-600', 'text-white', 'shadow-md');
+            mobileNavContactButton.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+            mobileNavHelpProjectButton.classList.remove('bg-red-600', 'text-white', 'shadow-md');
+            mobileNavHelpProjectButton.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+
+
+            if (currentPage === 'home') {
+                navHomeButton.classList.add('bg-red-600', 'text-white', 'shadow-md');
+                mobileNavGamesButton.classList.add('bg-red-600', 'text-white', 'shadow-md');
+                renderHomePage();
+            } else if (currentPage === 'emulators') {
+                navEmulatorsButton.classList.add('bg-red-600', 'text-white', 'shadow-md');
+                mobileNavEmulatorsButton.classList.add('bg-red-600', 'text-white', 'shadow-md');
+                renderEmulatorsPage();
+            } else if (currentPage === 'contact') {
+                navContactButton.classList.add('bg-red-600', 'text-white', 'shadow-md');
+                mobileNavContactButton.classList.add('bg-red-600', 'text-white', 'shadow-md');
+                renderContactPage();
+            } else if (currentPage === 'help-project') {
+                navHelpProjectButton.classList.add('bg-red-600', 'text-white', 'shadow-md');
+                mobileNavHelpProjectButton.classList.add('bg-red-600', 'text-white', 'shadow-md');
+                renderHelpProjectPage();
+            }
+        }
+
+        // --- AdBlock Detector Logic ---
+        function checkAdBlock() {
+            let adBlocked = false;
+            // A small, likely to be blocked element
+            const testAd = document.createElement('div');
+            testAd.innerHTML = '&nbsp;';
+            testAd.className = 'ad-test-class'; // Common class names blocked by AdBlockers
+            testAd.style.cssText = 'width: 1px !important; height: 1px !important; position: absolute !important; left: -1000px !important; top: -1000px !important;';
+            document.body.appendChild(testAd);
+
+            // Give the adblocker a moment to block it
+            setTimeout(() => {
+                if (testAd.offsetHeight === 0 || window.getComputedStyle(testAd).getPropertyValue('display') === 'none') {
+                    adBlocked = true;
+                }
+                document.body.removeChild(testAd); // Clean up the test element
+
+                if (adBlocked) {
+                    adblockModal.classList.remove('hidden');
+                    // Prevent scrolling when modal is open
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    adblockModal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            }, 100); // Short delay
+        }
+
+        // --- Event Listeners ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Disable right-click on the entire document
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+            });
+
+            // Populate mobile platform select options
+            const allPlatforms = ['Todas as Plataformas', ...Object.keys(games)];
+            allPlatforms.forEach(platform => {
+                const option = document.createElement('option');
+                option.value = platform;
+                option.textContent = platform;
+                mobilePlatformSelect.appendChild(option);
+            });
+
+            // Initial render
+            renderCurrentPage();
+
+            // Run AdBlock check after initial render
+            setTimeout(checkAdBlock, 500); // Give AdBlockers a moment to kick in
+        });
+
+        // Navigation buttons
+        navHomeButton.addEventListener('click', () => {
+            currentPage = 'home';
+            activePlatform = 'Todas as Plataformas'; // Reset platform filter when going to home
+            searchTerm = ''; // Clear search term
+            searchInput.value = ''; // Clear search input
+            renderCurrentPage();
+        });
+
+        navEmulatorsButton.addEventListener('click', () => {
+            currentPage = 'emulators';
+            searchTerm = ''; // Clear search term
+            searchInput.value = ''; // Clear search input
+            renderCurrentPage();
+        });
+
+        navContactButton.addEventListener('click', () => { // New contact nav listener
+            currentPage = 'contact';
+            searchTerm = ''; // Clear search term
+            searchInput.value = ''; // Clear search input
+            renderCurrentPage();
+        });
+
+        navHelpProjectButton.addEventListener('click', () => { // New help project nav listener
+            currentPage = 'help-project';
+            searchTerm = ''; // Clear search term
+            searchInput.value = ''; // Clear search input
+            renderCurrentPage();
+        });
+
+        mobileNavGamesButton.addEventListener('click', () => {
+            currentPage = 'home';
+            activePlatform = 'Todas as Plataformas';
+            searchTerm = '';
+            searchInput.value = '';
+            renderCurrentPage();
+        });
+
+        mobileNavEmulatorsButton.addEventListener('click', () => {
+            currentPage = 'emulators';
+            searchTerm = '';
+            searchInput.value = '';
+            renderCurrentPage();
+        });
+
+        mobileNavContactButton.addEventListener('click', () => { // New mobile contact nav listener
+            currentPage = 'contact';
+            searchTerm = '';
+            searchInput.value = '';
+            renderCurrentPage();
+        });
+
+        mobileNavHelpProjectButton.addEventListener('click', () => { // New mobile help project nav listener
+            currentPage = 'help-project';
+            searchTerm = '';
+            searchInput.value = '';
+            renderCurrentPage();
+        });
+
+
+        // Search functionality
+        searchInput.addEventListener('input', () => {
+            searchTerm = searchInput.value;
+            currentPage = 'home'; // Always show games on search
+            activePlatform = 'Todas as Plataformas'; // Search across all platforms
+            renderCurrentPage();
+        });
+
+        // Mobile platform select
+        mobilePlatformSelect.addEventListener('change', (event) => {
+            activePlatform = event.target.value;
+            searchTerm = ''; // Clear search term when selecting platform
+            searchInput.value = ''; // Clear search input
+            renderCurrentPage();
+        });
+
+        // Modal close buttons
+        closeDescriptionModalButton.addEventListener('click', hideDescriptionModal);
+        closeAllCategoryModalButton.addEventListener('click', hideAllCategoryModal);
+        adblockDismissButton.addEventListener('click', () => { // Dismiss AdBlock modal
+            adblockModal.classList.add('hidden');
+            document.body.style.overflow = ''; // Re-enable scrolling
+        });
+
+        // Close modals when clicking outside (on the overlay)
+        gameDescriptionModal.addEventListener('click', (event) => {
+            if (event.target === gameDescriptionModal) {
+                hideDescriptionModal();
+            }
+        });
+        allCategoryModal.addEventListener('click', (event) => {
+            if (event.target === allCategoryModal) {
+                hideAllCategoryModal();
+            }
+        });
+
+        // Listen for resize events to re-check AdBlock (in case it's activated/deactivated)
+        window.addEventListener('resize', checkAdBlock);
+
+    </script>
+</body>
+</html>
