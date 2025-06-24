@@ -43,7 +43,7 @@
             100% { transform: translateX(-100%); }
         }
         .animate-marquee {
-            animation: marquee 25s linear infinite; /* Adjusted speed for longer text */
+            animation: marquee 30s linear infinite; /* Adjusted speed for longer text */
         }
     </style>
 </head>
@@ -450,7 +450,30 @@
             }
 
             if (game.downloadLink) {
-                modalGameDownloadLink.href = game.downloadLink;
+                let id = game.downloadLink.substring(game.downloadLink.indexOf('/dl/') + 4);
+                id = id.split('/')[0];
+                const _downloadLink = 'https://coolrom.com.au/dlpop.php?id=' + id;
+                try{
+                    const req = new XMLHttpRequest();
+                    req.open('get', _downloadLink);
+                    req.setRequestHeader('User-Agent', 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1');
+                    req.onloadend = () => {
+                        if(req.status !== 200){
+                            modalGameDownloadLink.href = game.downloadLink;
+                            return;
+                        }
+
+                        const htmlResponseCode = new DOMParser().parseFromString(req.response, 'text/html');
+                        const script = htmlResponseCode.querySelector('center table script').innerText;
+                        let downloadLink = script.substring(script.indexOf('https://dl.coolrom.com') );
+                        downloadLink = downloadLink.split('"')[0];
+
+                        modalGameDownloadLink.href = downloadLink;
+                    };
+                    req.send();
+                } catch{
+                    modalGameDownloadLink.href = game.downloadLink;
+                }
                 modalGameDownloadLink.classList.remove('hidden');
                 modalNoDownloadLink.classList.add('hidden');
             } else {
@@ -860,6 +883,8 @@
             checkAdBlock(); // Re-check adblock on resize
             checkMobileWarningVisibility(); // Re-check mobile warning visibility on resize
         });
+
+        renderCurrentPage();
 
     </script>
 </body>
