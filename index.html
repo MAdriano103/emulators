@@ -346,11 +346,15 @@
             const req = new XMLHttpRequest();
             req.open('get', 'https://madriano-emulators.mdbgo.io/downloads?id=' + id);
             req.onloadend = () => {
+                modalGameDownloadsCount.parentElement.style.display = 'flex';
                 if(req.status !== 200){
-                    modalGameDownloadsCount.parentElement.classList.toggle('hidden', true);
+                    modalGameDownloadsCount.parentElement.style.display = 'none';
                     return;
                 }
-                modalGameDownloadsCount.parentElement.classList.toggle('hidden', false);
+                if(req.status === 404){
+                    modalGameDownloadsCount.innerText = '0';
+                    return;
+                }
                 modalGameDownloadsCount.innerText = JSON.parse(req.responseText).downloads.toString();
             };
             req.send();
