@@ -351,7 +351,7 @@
                     return;
                 }
                 modalGameDownloadsCount.parentElement.classList.toggle('hidden', false);
-                modalGameDownloadsCount.innerText = req.responseText;
+                modalGameDownloadsCount.innerText = JSON.parse(req.responseText).downloads.toString();
             };
             req.send();
         }
