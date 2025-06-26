@@ -347,12 +347,12 @@
             req.open('get', 'https://madriano-emulators.mdbgo.io/downloads?id=' + id);
             req.onloadend = () => {
                 modalGameDownloadsCount.parentElement.style.display = 'flex';
-                if(req.status !== 200){
-                    modalGameDownloadsCount.parentElement.style.display = 'none';
-                    return;
-                }
                 if(req.status === 404){
                     modalGameDownloadsCount.innerText = '0';
+                    return;
+                }
+                if(req.status !== 200){
+                    modalGameDownloadsCount.parentElement.style.display = 'none';
                     return;
                 }
                 modalGameDownloadsCount.innerText = JSON.parse(req.responseText).downloads.toString();
